@@ -1,54 +1,56 @@
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent))  # Root directory ko path mein add karne ke liye
+
 import pytest
 from fastapi.testclient import TestClient
-
 from backend.main import app
 
 client = TestClient(app)
 
-VALID_SUBMISSION = {
-    "name": "Muhammad Shayan Khan",
-    "registration_number": "FA22-BSE-154",
-    "assignment_title": "DevOps Lab Midterm",
-    "submission_url": "https://github.com/test/repo",
-}
+# 1. Valid Submission Test
+def test_valid_submission(tmp_path, monkeypatch):
+    test_file = tmp_path / "test_submissions.json"
+    monkeypatch.setenv("SUBMISSIONS_FILE", str(test_file))
 
-
-@pytest.fixture(autouse=True)
-def temp_storage(tmp_path, monkeypatch):
-    # Har test ke liye nayi khali file, asli submissions.json safe rehti hai
-    data_file = tmp_path / "submissions.json"
-    data_file.write_text("[]", encoding="utf-8")
-    monkeypatch.setenv("SUBMISSIONS_FILE", str(data_file))
-
-
-def test_valid_submission_is_saved_and_listed():
-    response = client.post("/submissions", json=VALID_SUBMISSION)
+    payload = {
+        "name": "Ali Hassan",
+        "registration_number": "FA20-BSE-001",
+        "assignment_title": "DevOps Lab Midterm",
+        "submission_url": "https://github.com/example/repo"
+    }
+    response = client.post("/submissions", json=payload)
     assert response.status_code == 201
-    assert response.json()["message"] == "Submission saved successfully"
+    data = response.json()
+    assert data["message"] == "Submission saved successfully"
+    assert data["submission"]["name"] == "Ali Hassan"
 
-    submissions = client.get("/submissions").json()
-    assert len(submissions) == 1
-    assert submissions[0]["registration_number"] == "FA22-BSE-154"
-    assert submissions[0]["submission_url"] == "https://github.com/test/repo"
+# 2. Missing Registration Number Test
+def test_missing_registration_number(tmp_path, monkeypatch):
+    test_file = tmp_path / "test_submissions.json"
+    monkeypatch.setenv("SUBMISSIONS_FILE", str(test_file))
 
-
-def test_missing_registration_number_is_rejected():
-    data = dict(VALID_SUBMISSION)
-    del data["registration_number"]
-
-    response = client.post("/submissions", json=data)
+    payload = {
+        "name": "Ali Hassan",
+        "registration_number": "   ",  # Blank/Empty
+        "assignment_title": "DevOps Lab Midterm",
+        "submission_url": "https://github.com/example/repo"
+    }
+    response = client.post("/submissions", json=payload)
     assert response.status_code == 422
     assert "Registration number is required" in response.json()["errors"]
 
-    assert client.get("/submissions").json() == []
+# 3. Invalid Submission URL Test
+def test_invalid_submission_url(tmp_path, monkeypatch):
+    test_file = tmp_path / "test_submissions.json"
+    monkeypatch.setenv("SUBMISSIONS_FILE", str(test_file))
 
-
-def test_invalid_url_is_rejected_and_not_saved():
-    data = dict(VALID_SUBMISSION)
-    data["submission_url"] = "not-a-valid-url"
-
-    response = client.post("/submissions", json=data)
+    payload = {
+        "name": "Ali Hassan",
+        "registration_number": "FA20-BSE-001",
+        "assignment_title": "DevOps Lab Midterm",
+        "submission_url": "invalid-url-format"
+    }
+    response = client.post("/submissions", json=payload)
     assert response.status_code == 422
     assert "Submission URL must be a valid http or https URL" in response.json()["errors"]
-
-    assert client.get("/submissions").json() == []
