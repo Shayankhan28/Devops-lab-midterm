@@ -75,37 +75,35 @@ The test results will be displayed in the terminal.
 ## Sending Reports to Your Computer
 
 This project uses Cloudflare Quick Tunnel to let GitHub-hosted Actions send
-reports to the receiver on your computer. No self-hosted runner or Cloudflare
-account is required for a temporary Quick Tunnel.
+reports to the receiver on your computer. No Cloudflare account or auth token
+is required. Keep both the receiver and tunnel running while the workflow executes.
 
-1. In **Settings → Secrets and variables → Actions**, add:
-   - Repository variable `RECEIVER_URL` with the HTTPS `trycloudflare.com` URL
-     printed by `cloudflared`.
-   - Repository secret `REPORT_TOKEN` with a private token generated locally.
-2. From the repository root, start the receiver in one PowerShell terminal:
+1. In **Settings → Secrets and variables → Actions → Secrets**, add:
+   - `RECEIVER_URL` with the HTTPS `trycloudflare.com` URL printed by `cloudflared`.
+   - `REPORT_TOKEN` with the same private token configured for the local receiver.
+2. From the repository root, start the receiver in one terminal if it is not
+   already running:
 
 ```powershell
 $env:REPORT_TOKEN = "your-private-token"
 python -m uvicorn receiver.receiver:app --host 0.0.0.0 --port 8000
 ```
 
-3. Install `cloudflared` if needed, then start a Quick Tunnel in another
-   terminal:
+3. In another terminal, start the Cloudflare Quick Tunnel:
 
    ```powershell
-   winget install --id Cloudflare.cloudflared
    cloudflared tunnel --url http://127.0.0.1:8000
    ```
 
-4. Copy the HTTPS `trycloudflare.com` URL printed by the command into the
-   GitHub `RECEIVER_URL` variable. The Actions runner uses that public URL to
+4. Copy the HTTPS `trycloudflare.com` URL printed in the terminal into the
+   GitHub `RECEIVER_URL` secret. The Actions runner uses that public URL to
    reach your computer.
 5. Keep the receiver and tunnel terminals open, then push a commit. The
-   GitHub-hosted workflow sends the actual results to the receiver, which saves
+   GitHub-hosted workflow sends actual test results to the receiver, which saves
    or replaces `test-report.json` in the repository root.
 
-Quick Tunnel URLs are temporary and can change when restarted. Update
-`RECEIVER_URL` in GitHub whenever the URL changes.
+The Quick Tunnel URL may change when restarted. Update the `RECEIVER_URL`
+GitHub secret whenever it changes.
 
 The report includes run metadata, test counts, each test result, and failure
 messages when available.

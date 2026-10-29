@@ -30,7 +30,7 @@ jobs:
         id: report
         if: always() && steps.tests.outcome != 'skipped'
         env:
-          RECEIVER_URL: ${{ vars.RECEIVER_URL }}
+          RECEIVER_URL: ${{ secrets.RECEIVER_URL }}
           REPORT_TOKEN: ${{ secrets.REPORT_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_REF_NAME: ${{ github.ref_name }}
