@@ -1,50 +1,78 @@
-# Assignment Submission Portal
+# CSC418 DevOps Lab Midterm
 
-A simple Assignment Submission Portal built with FastAPI for the CSC418 DevOps Lab Midterm.
+## Assignment Submission Portal with Automated Testing
+
+This project was developed as part of the CSC418 DevOps Lab Midterm Examination. The system allows students to submit assignment details through a web interface, validates input data, stores valid submissions, and displays saved submissions. The project also includes automated testing, CI pipeline integration, and a local test report receiver.
+
+---
 
 ## Features
 
 - Submit assignment details
 - Validate required fields
-- Validate submission URL
-- Save valid submissions
+- Validate submission URLs
+- Store valid submissions
 - Display saved submissions
 - Automated testing using Pytest
-- CI pipeline using GitHub Actions
-- Local test report receiver
+- Continuous Integration using GitHub Actions
+- Local JSON test report receiver
 
-## Requirements
+---
 
-- Python 3.10+
-- FastAPI
-- Uvicorn
+## Prerequisites
 
-## Install Dependencies
+- Python 3.10 or later
+- Git
+
+---
+
+## Installation
+
+Clone the repository:
+
+```bash
+git clone <repository-url>
+cd Lab-mid-term
+```
+
+Install required dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## Run the Application
+---
+
+## Running the Application
+
+Start the FastAPI server:
 
 ```bash
 cd backend
 uvicorn main:app --reload
 ```
 
-Open your browser and visit:
+Open the application in your browser:
 
 ```text
 http://127.0.0.1:8000
 ```
 
-## Run Automated Tests
+---
+
+## Running Automated Tests
+
+Execute all test cases using:
 
 ```bash
 pytest
 ```
 
-## Start Local Receiver
+The test results will be displayed in the terminal.
+
+---
+
+## Starting the Local Report Receiver
 
 Open a new terminal and run:
 
@@ -52,11 +80,13 @@ Open a new terminal and run:
 python receiver/receiver.py
 ```
 
-The receiver will save the incoming report as:
+The receiver will automatically receive and save test reports as:
 
 ```text
 test-report.json
 ```
+
+---
 
 ## Project Structure
 
@@ -87,52 +117,67 @@ Lab-mid-term/
 └── .gitignore
 ```
 
-## Test Cases
+---
 
-### Test Case 1
+## Required Test Cases
+
+### Test Case 1: Valid Submission
 
 Input:
 
-- Valid name
+- Valid student name
 - Valid registration number
 - Valid assignment title
-- Valid URL
+- Valid submission URL
 
 Expected Result:
 
-- Submission is saved successfully.
+- Submission is accepted and saved successfully.
 
-### Test Case 2
+### Test Case 2: Missing Registration Number
 
 Input:
 
-- Missing registration number
+- Student name provided
+- Registration number missing
+- Assignment title provided
+- Valid submission URL
 
 Expected Result:
 
 - Validation error is returned.
+- Submission is not saved.
 
-### Test Case 3
+### Test Case 3: Invalid Submission URL
 
 Input:
 
+- Valid student name
+- Valid registration number
+- Valid assignment title
 - Invalid URL
 
 Expected Result:
 
-- Submission is rejected and not saved.
+- Submission is rejected.
+- Submission is not saved.
 
-## Repository
+---
+
+## Repository Contents
 
 This repository contains:
 
 - Application source code
-- Automated tests
-- CI pipeline configuration
+- Automated test cases
+- GitHub Actions CI configuration
 - Local report receiver
+- Project documentation
+
+---
 
 ## Author
 
-Muhammad Shayan Khan
-COMSATS University Islamabad
-Attock Campus
+Muhammad Shayan Khan  
+Bachelor of Software Engineering (BSE)  
+COMSATS University Islamabad, Attock Campus
