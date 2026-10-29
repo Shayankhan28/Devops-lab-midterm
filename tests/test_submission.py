@@ -1,17 +1,17 @@
-import os
-import tempfile
+import pytest
 from fastapi.testclient import TestClient
-
-# Temporary file create karo taake asli submissions.json affect na ho
-temp_file = tempfile.NamedTemporaryFile(delete=False)
-os.environ["SUBMISSIONS_FILE"] = temp_file.name
 
 from backend.main import app
 
-client = TestClient(app)
+
+@pytest.fixture
+def client(tmp_path, monkeypatch):
+    submissions_file = tmp_path / "submissions.json"
+    monkeypatch.setenv("SUBMISSIONS_FILE", str(submissions_file))
+    return TestClient(app)
 
 
-def test_valid_submission():
+def test_valid_submission_is_saved_and_listed(client):
     response = client.post(
         "/submissions",
         json={
@@ -25,10 +25,13 @@ def test_valid_submission():
     assert response.status_code == 201
 
     submissions = client.get("/submissions")
-    assert len(submissions.json()) > 0
+    assert any(
+        submission["registration_number"] == "FA22-BSE-001"
+        for submission in submissions.json()
+    )
 
 
-def test_missing_registration_number():
+def test_missing_registration_number_is_rejected_with_message(client):
     response = client.post(
         "/submissions",
         json={
@@ -39,9 +42,11 @@ def test_missing_registration_number():
     )
 
     assert response.status_code == 422
+    assert "Registration number is required" in response.json()["errors"]
 
 
-def test_invalid_submission_url():
+def test_invalid_submission_url_is_rejected_and_not_saved(client):
+    submissions_before = client.get("/submissions").json()
     response = client.post(
         "/submissions",
         json={
@@ -53,3 +58,4 @@ def test_invalid_submission_url():
     )
 
     assert response.status_code == 422
+    assert client.get("/submissions").json() == submissions_before
