@@ -1,65 +1,29 @@
-name: CI/CD Pipeline
+name: Run Automated Tests
 
 on:
   push:
-    branches: [ main ]
-
-permissions:
-  contents: write
+    branches:
+      - main
+      - master
 
 jobs:
-  test-and-report:
+  test:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - name: Set Up Python
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: "3.12"
 
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt pytest-json-report
+          pip install -r requirements.txt
 
-      - name: Run Automated Tests
-        id: run_tests
+      - name: Run Tests
         run: |
-          pytest tests/test_submission.py --json-report --json-report-file=test-report.json
-        continue-on-error: true
-
-      - name: Process Report & Send to Localhost Receiver
-        env:
-          RECEIVER_URL: ${{ secrets.RECEIVER_URL }}
-        run: |
-          python scripts/generate_report.py
-
-      - name: Send Email Report (Bonus)
-        env:
-          EMAIL_ADDRESS: ${{ secrets.EMAIL_ADDRESS }}
-          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
-        run: |
-          python scripts/send_email.py
-
-      - name: Check Test Status
-        if: steps.run_tests.outcome != 'success'
-        run: |
-          echo "Automated tests failed!"
-          exit 1
-
-  deploy-pages:
-    needs: test-and-report
-    if: github.ref == 'refs/heads/main' && success()
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
-
-      - name: Deploy Static Frontend to GitHub Pages (Bonus)
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./frontend
+          pytest -v
