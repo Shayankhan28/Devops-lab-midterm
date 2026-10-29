@@ -54,7 +54,7 @@ jobs:
           GITHUB_SHA: ${{ github.sha }}
           GITHUB_RUN_ID: ${{ github.run_id }}
           GITHUB_RUN_ATTEMPT: ${{ github.run_attempt }}
-        run: python scripts/send_email.py test-results.xml
+        run: python -m scripts.send_email test-results.xml
 
       - name: Fail if tests or report delivery failed
         if: always() && (steps.tests.outcome != 'success' || steps.report.outcome != 'success' || (vars.EMAIL_REPORT_ENABLED == 'true' && steps.email.outcome != 'success'))
