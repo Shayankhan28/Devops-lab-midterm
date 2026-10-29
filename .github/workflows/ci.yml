@@ -39,9 +39,27 @@ jobs:
           GITHUB_RUN_ATTEMPT: ${{ github.run_attempt }}
         run: python scripts/generate_report.py test-results.xml
 
+      - name: Email test report
+        id: email
+        if: always() && steps.tests.outcome != 'skipped' && vars.EMAIL_REPORT_ENABLED == 'true'
+        env:
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+          EMAIL_TO: ${{ secrets.EMAIL_TO }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          GITHUB_RUN_ATTEMPT: ${{ github.run_attempt }}
+        run: python scripts/send_email.py test-results.xml
+
       - name: Fail if tests or report delivery failed
-        if: always() && (steps.tests.outcome != 'success' || steps.report.outcome != 'success')
+        if: always() && (steps.tests.outcome != 'success' || steps.report.outcome != 'success' || (vars.EMAIL_REPORT_ENABLED == 'true' && steps.email.outcome != 'success'))
         run: |
           echo "Tests outcome: ${{ steps.tests.outcome }}"
           echo "Report delivery outcome: ${{ steps.report.outcome }}"
+          echo "Email outcome: ${{ steps.email.outcome }}"
           exit 1

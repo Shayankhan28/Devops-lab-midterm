@@ -128,6 +128,29 @@ The receiver saves reports as:
 test-report.json
 ```
 
+## Email Test Reports (Bonus)
+
+The workflow can email the report after both passing and failing test runs.
+Configure an SMTP account, then add these repository secrets under
+**Settings → Secrets and variables → Actions → Secrets**:
+
+- `SMTP_HOST` (Gmail: `smtp.gmail.com`)
+- `SMTP_PORT` (Gmail: `587`)
+- `SMTP_USERNAME` (your SMTP account username)
+- `SMTP_PASSWORD` (use a provider app password; never use or commit your normal account password)
+- `EMAIL_FROM` (the sender address authorized by the SMTP account)
+- `EMAIL_TO` (the destination address)
+
+For Gmail, enable 2-Step Verification and create an App Password in your Google
+Account security settings. Store that app password as `SMTP_PASSWORD`.
+
+Then add the repository variable `EMAIL_REPORT_ENABLED` with the exact value
+`true` under **Settings → Secrets and variables → Actions → Variables**.
+Until this variable is enabled, the email step is skipped and does not affect CI.
+Once enabled, an email delivery error fails the job so the notification failure
+is visible. The email contains repository, branch, commit and run identifiers,
+the overall status and counts, and each test result with failure details.
+
 ---
 
 ## Project Structure
