@@ -1,245 +1,308 @@
 # CSC418 DevOps Lab Midterm
 
-## Assignment Submission Portal with Automated Testing
+An assignment submission portal with automated tests, GitHub Actions CI, a
+local JSON report receiver, and optional email notifications.
 
-This project was developed as part of the CSC418 DevOps Lab Midterm Examination. The system allows students to submit assignment details through a web interface, validates input data, stores valid submissions, and displays saved submissions. The project also includes automated testing, CI pipeline integration, and a local test report receiver.
+| Component | Implementation |
+| --- | --- |
+| Frontend | Static HTML, CSS, and JavaScript |
+| API | FastAPI |
+| Data storage | Local JSON file |
+| Tests | pytest and FastAPI `TestClient` |
+| CI | GitHub Actions on every push |
+| CI report delivery | Cloudflare Quick Tunnel to a local receiver |
+| Optional notification | SMTP email |
 
----
+## Contents
+
+- [Features](#features)
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Run the application locally](#run-the-application-locally)
+- [Run tests locally](#run-tests-locally)
+- [Run CI on GitHub](#run-ci-on-github)
+- [Receive CI reports on your computer](#receive-ci-reports-on-your-computer)
+- [Optional: email reports](#optional-email-reports)
+- [Demonstrate a failing and fixed run](#demonstrate-a-failing-and-fixed-run)
+- [Project structure](#project-structure)
 
 ## Features
 
-- Submit assignment details
-- Validate required fields
-- Validate submission URLs
-- Store valid submissions
-- Display saved submissions
-- Automated testing using Pytest
-- Continuous Integration using GitHub Actions
-- Local JSON test report receiver
+- Accepts a student's name, registration number, assignment title, and
+  submission URL.
+- Validates required fields and accepts only valid HTTP or HTTPS submission URLs.
+- Saves valid submissions to `backend/submissions.json` and lists saved records.
+- Tests valid submission, missing registration number, and invalid submission URL.
+- Runs the test suite on each push and produces a machine-readable JUnit result.
+- Sends run metadata and individual test results to a local JSON report receiver.
+- Optionally emails the same test results after passing or failing runs.
 
----
+## Requirements
 
-## Prerequisites
-
-- Python 3.10 or later
+- Python 3.10 or later (CI uses Python 3.12)
 - Git
-
----
+- For report delivery: `cloudflared` and an internet connection
+- For email notifications: an SMTP account and its app password or SMTP credential
 
 ## Installation
 
-Clone the repository:
+Clone the repository and enter its folder:
 
-```bash
-git clone <repository-url>
-cd Lab-mid-term
+```cmd
+git clone https://github.com/Shayankhan28/Devops-lab-midterm.git
+cd Devops-lab-midterm
 ```
 
-Install required dependencies:
+Create and activate a virtual environment on Windows:
 
-```bash
-pip install -r requirements.txt
+```cmd
+python -m venv venv
+venv\Scripts\activate
 ```
 
----
+Install dependencies:
 
-## Running the Application
-
-Start the FastAPI server:
-
-```bash
-cd backend
-uvicorn main:app --reload
+```cmd
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
 ```
 
-Open the application in your browser:
+## Run the application locally
 
-```text
-http://127.0.0.1:8000
+The API and static frontend run in separate terminals. Start the API from the
+repository root:
+
+```cmd
+python -m uvicorn backend.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
----
+In a second terminal, serve the frontend:
 
-## Running Automated Tests
-
-Execute all test cases using:
-
-```bash
-pytest
+```cmd
+cd frontend
+python -m http.server 5500
 ```
 
-The test results will be displayed in the terminal.
+Open the frontend at <http://127.0.0.1:5500>. The API is available at
+<http://127.0.0.1:8000>; the submission collection endpoint is
+<http://127.0.0.1:8000/submissions>.
 
----
+Stop either local server with `Ctrl+C`.
 
-## Sending Reports to Your Computer
+## Run tests locally
 
-This project uses Cloudflare Quick Tunnel to let GitHub-hosted Actions send
-reports to the receiver on your computer. No Cloudflare account or auth token
-is required. Keep both the receiver and tunnel running while the workflow executes.
+From the repository root with the virtual environment active:
 
-1. In **Settings → Secrets and variables → Actions → Secrets**, add:
-   - `RECEIVER_URL` with the HTTPS `trycloudflare.com` URL printed by `cloudflared`.
-   - `REPORT_TOKEN` with the same private token configured for the local receiver.
-2. From the repository root, start the receiver in one terminal if it is not
-   already running:
-
-```powershell
-$env:REPORT_TOKEN = "your-private-token"
-python -m uvicorn receiver.receiver:app --host 0.0.0.0 --port 8000
+```cmd
+python -m pytest -v
 ```
 
-3. In another terminal, start the Cloudflare Quick Tunnel:
+To run only the submission API tests:
 
-   ```powershell
-   cloudflared tunnel --url http://127.0.0.1:8000
-   ```
+```cmd
+python -m pytest -v tests\test_submission.py
+```
 
-4. Copy the HTTPS `trycloudflare.com` URL printed in the terminal into the
-   GitHub `RECEIVER_URL` secret. The Actions runner uses that public URL to
-   reach your computer.
-5. Keep the receiver and tunnel terminals open, then push a commit. The
-   GitHub-hosted workflow sends actual test results to the receiver, which saves
-   or replaces `test-report.json` in the repository root.
+The tests use temporary storage, so test submissions do not modify the real
+`backend/submissions.json` file. A non-zero pytest exit code indicates failure.
 
-The Quick Tunnel URL may change when restarted. Update the `RECEIVER_URL`
-GitHub secret whenever it changes.
+## Run CI on GitHub
 
-The report includes run metadata, test counts, each test result, and failure
-messages when available.
+The workflow in `.github/workflows/ci.yml` runs on every push to the repository.
+It checks out the pushed revision, installs dependencies, runs pytest, creates
+`test-results.xml`, sends the test report, and optionally emails it. A failed
+test or configured report/email delivery failure makes the workflow fail.
 
-The report step runs after both passing and failing test runs. A test failure
-still makes the GitHub Actions job fail after the report is sent. The token
-protects the receiver endpoint; do not share or commit it.
+Commit and push changes from Windows CMD:
 
-To generate a token in PowerShell without printing it, run:
+```cmd
+git status
+git add README.md
+git commit -m "Update project documentation"
+git push origin main
+```
+
+Replace `README.md` and the commit message with the files and message for your
+own change. Stage only intended files; review `git status` before committing.
+To see the CI result, open the repository's **Actions** tab, select the latest
+**Run Automated Tests** run, and inspect its steps.
+
+## Receive CI reports on your computer
+
+GitHub-hosted runners cannot write directly to your computer's `localhost`. A
+Cloudflare Quick Tunnel provides a temporary HTTPS route to the local receiver.
+It does not require a Cloudflare account. Keep both the receiver and tunnel
+running while the GitHub Actions job executes.
+
+### 1. Configure the GitHub repository secrets
+
+Open **Settings → Secrets and variables → Actions → Secrets** and add:
+
+| Secret name | Value |
+| --- | --- |
+| `REPORT_TOKEN` | A private random token shared only between the receiver and GitHub Actions |
+| `RECEIVER_URL` | The HTTPS `trycloudflare.com` URL printed by `cloudflared` |
+
+The workflow reads both values from repository secrets. Do not put credentials
+in source code, commit them, or share them in screenshots.
+
+To generate a new report token from PowerShell without printing it, run:
 
 ```powershell
 $env:REPORT_TOKEN = python -c "import secrets; print(secrets.token_urlsafe(32))"
 Set-Clipboard $env:REPORT_TOKEN
 ```
 
-Paste the clipboard value into the GitHub `REPORT_TOKEN` secret and use the
-environment variable when starting the receiver.
+Add the clipboard value as the GitHub `REPORT_TOKEN` secret. Start the receiver
+in that same PowerShell window so it inherits the token:
 
-The receiver saves reports as:
-
-```text
-test-report.json
+```powershell
+python -m uvicorn receiver.receiver:app --host 127.0.0.1 --port 8000
 ```
 
-## Email Test Reports (Bonus)
+Keep the receiver window open.
 
-The workflow can email the report after both passing and failing test runs.
-Configure an SMTP account, then add these repository secrets under
-**Settings → Secrets and variables → Actions → Secrets**:
+### 2. Start the Cloudflare tunnel
 
-- `SMTP_HOST` (Gmail: `smtp.gmail.com`)
-- `SMTP_PORT` (Gmail: `587`)
-- `SMTP_USERNAME` (your SMTP account username)
-- `SMTP_PASSWORD` (use a provider app password; never use or commit your normal account password)
-- `EMAIL_FROM` (the sender address authorized by the SMTP account)
-- `EMAIL_TO` (the destination address)
+In a second terminal, run:
+
+```cmd
+cloudflared tunnel --url http://127.0.0.1:8000
+```
+
+Copy the `https://....trycloudflare.com` URL printed by the command. Add or
+update the `RECEIVER_URL` repository secret with that complete URL (no extra
+path). Keep the tunnel window open too. Quick Tunnel URLs can change after a
+restart; update the secret whenever the URL changes.
+
+### 3. Push and verify report delivery
+
+Push a commit to trigger the workflow:
+
+```cmd
+git add README.md
+git commit -m "Update project documentation"
+git push origin main
+```
+
+Replace `README.md` and the commit message with the files and message for your
+own change.
+
+The workflow sends the results after both passing and failing test runs. The
+receiver creates or replaces `test-report.json` in the repository root. The
+report includes the repository, branch, commit SHA, pipeline run identifier,
+timestamp, test counts, overall status, and each test result with a failure
+message when applicable.
+
+Check the latest Actions run for a successful **Send test report** step, then
+open `test-report.json` locally. Keep the receiver and tunnel running until
+the report step has completed.
+
+### Local receiver without GitHub Actions
+
+To start only the receiver locally, set `REPORT_TOKEN` in PowerShell and run
+Uvicorn as shown above. The receiver accepts authenticated reports at
+`POST /report`; it does not run pytest by itself. GitHub Actions generates the
+actual results and sends them to this endpoint.
+
+### Troubleshooting
+
+- **`RECEIVER_URL must be set`**: verify `RECEIVER_URL` is a repository secret
+  under **Settings → Secrets and variables → Actions → Secrets**, not a
+  repository variable.
+- **Receiver returns `401`**: the receiver's `REPORT_TOKEN` and GitHub's
+  `REPORT_TOKEN` secret must match. Restart the receiver after changing its
+  local token.
+- **Tunnel returns an error or times out**: check that the receiver is running
+  on port `8000`, restart the Quick Tunnel, and update the `RECEIVER_URL`
+  secret if its URL changed.
+- **Email authentication fails**: check the SMTP host/port, sender account,
+  and provider app password. Do not use a normal Gmail password.
+
+## Optional: email reports
+
+The email step is disabled unless the repository variable
+`EMAIL_REPORT_ENABLED` is exactly `true`. To enable it, open
+**Settings → Secrets and variables → Actions**.
+
+Add these **repository secrets**:
+
+| Secret name | Example or description |
+| --- | --- |
+| `SMTP_HOST` | Gmail: `smtp.gmail.com` |
+| `SMTP_PORT` | Gmail with STARTTLS: `587` |
+| `SMTP_USERNAME` | Full SMTP account username, often an email address |
+| `SMTP_PASSWORD` | SMTP credential or provider app password; not the normal account password |
+| `EMAIL_FROM` | Sender address authorized by the SMTP account |
+| `EMAIL_TO` | Destination email address |
 
 For Gmail, enable 2-Step Verification and create an App Password in your Google
-Account security settings. Store that app password as `SMTP_PASSWORD`.
+Account security settings. Save the App Password as `SMTP_PASSWORD`; never
+commit or share it.
 
-Then add the repository variable `EMAIL_REPORT_ENABLED` with the exact value
-`true` under **Settings → Secrets and variables → Actions → Variables**.
-Until this variable is enabled, the email step is skipped and does not affect CI.
-Once enabled, an email delivery error fails the job so the notification failure
-is visible. The email contains repository, branch, commit and run identifiers,
-the overall status and counts, and each test result with failure details.
+Then open the **Variables** tab and add:
 
----
+| Variable name | Value |
+| --- | --- |
+| `EMAIL_REPORT_ENABLED` | `true` |
 
-## Project Structure
+When enabled, the workflow emails the repository, branch, commit, run ID,
+timestamp, overall result, test counts, and individual test outcomes after both
+passing and failing runs. Email configuration/delivery failure is visible in
+the Actions run and causes the job to fail.
+
+## Demonstrate a failing and fixed run
+
+For the assignment demonstration, capture evidence of a passing run, a failing
+run after introducing a temporary defect, and a passing run after fixing it.
+Keep the receiver and tunnel active for each run if report delivery is enabled.
+
+For example, temporarily bypass the URL validator in `backend/main.py`. The
+existing invalid-URL test should then fail because the API accepts a URL that
+the test expects to reject. Commit and push that temporary change, then verify
+that Actions fails and the received JSON report says `FAILED`.
+
+Restore the URL validation immediately, run the tests locally, and push the
+fix. Verify the final Actions run succeeds and the received JSON report says
+`PASSED`. Do not leave the demonstration defect in the final revision.
+
+Suggested evidence:
+
+1. Local pytest output showing passing tests.
+2. GitHub Actions run showing successful CI.
+3. Repository Actions secrets page (secret values must remain hidden).
+4. `test-report.json` showing run metadata and test results.
+5. Failing Actions run and its `FAILED` JSON report.
+6. Corrected passing Actions run and its `PASSED` report.
+7. Email received for the CI run, if the email bonus is enabled.
+
+## Project structure
 
 ```text
-Lab-mid-term/
-│
-├── backend/
-│   ├── main.py
-│   └── submissions.json
-│
-├── frontend/
-│   ├── index.html
-│   ├── style.css
-│   └── script.js
-│
-├── tests/
-│   └── test_submission.py
-│
-├── receiver/
-│   └── receiver.py
-│
+Devops-lab-midterm/
 ├── .github/
 │   └── workflows/
 │       └── ci.yml
-│
+├── backend/
+│   ├── main.py
+│   └── submissions.json
+├── frontend/
+│   ├── index.html
+│   ├── script.js
+│   └── style.css
+├── receiver/
+│   └── receiver.py
+├── scripts/
+│   ├── generate_report.py
+│   └── send_email.py
+├── tests/
+│   ├── test_generate_report.py
+│   ├── test_report_receiver.py
+│   ├── test_send_email.py
+│   └── test_submission.py
 ├── requirements.txt
-├── README.md
-└── .gitignore
+└── README.md
 ```
-
----
-
-## Required Test Cases
-
-### Test Case 1: Valid Submission
-
-Input:
-
-- Valid student name
-- Valid registration number
-- Valid assignment title
-- Valid submission URL
-
-Expected Result:
-
-- Submission is accepted and saved successfully.
-
-### Test Case 2: Missing Registration Number
-
-Input:
-
-- Student name provided
-- Registration number missing
-- Assignment title provided
-- Valid submission URL
-
-Expected Result:
-
-- Validation error is returned.
-- Submission is not saved.
-
-### Test Case 3: Invalid Submission URL
-
-Input:
-
-- Valid student name
-- Valid registration number
-- Valid assignment title
-- Invalid URL
-
-Expected Result:
-
-- Submission is rejected.
-- Submission is not saved.
-
----
-
-## Repository Contents
-
-This repository contains:
-
-- Application source code
-- Automated test cases
-- GitHub Actions CI configuration
-- Local report receiver
-- Project documentation
-
----
 
 ## Author
 
