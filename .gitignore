@@ -3,3 +3,4 @@ __pycache__/
 .pytest_cache/
 *.pyc
 test-report.json
+test-results.xml

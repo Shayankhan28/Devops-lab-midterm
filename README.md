@@ -72,15 +72,47 @@ The test results will be displayed in the terminal.
 
 ---
 
-## Starting the Local Report Receiver
+## Sending Reports to Your Computer
 
-Open a new terminal and run:
+This project uses a GitHub self-hosted runner so GitHub Actions can send reports
+to the receiver on the same Windows computer without a public tunnel.
 
-```bash
-python receiver/receiver.py
+1. In GitHub, open **Settings → Actions → Runners → New self-hosted runner**.
+   Choose **Windows** and follow GitHub's displayed instructions to download
+   and configure the runner from a separate repository folder. Keep its
+   `run.cmd` terminal open while you want workflows to run.
+2. In **Settings → Secrets and variables → Actions**, add:
+   - Repository variable `RECEIVER_URL` with value `http://127.0.0.1:8000`.
+   - Repository secret `REPORT_TOKEN` with a private token you generate locally.
+3. In a separate terminal, from the repository root, start the receiver with
+   that same token:
+
+```powershell
+$env:REPORT_TOKEN = "your-private-token"
+python -m uvicorn receiver.receiver:app --host 127.0.0.1 --port 8000
 ```
 
-The receiver will automatically receive and save test reports as:
+Keep both the runner and receiver terminals open, then push a commit. The
+workflow runs the tests on your PC and sends the actual results to the receiver,
+which saves or replaces `test-report.json` in the repository root. The report
+includes run metadata, test counts, each test result, and failure messages
+when available.
+
+The report step runs after both passing and failing test runs. A test failure
+still makes the GitHub Actions job fail after the report is sent. The token
+protects the receiver endpoint; do not share or commit it.
+
+To generate a token in PowerShell without printing it, run:
+
+```powershell
+$env:REPORT_TOKEN = python -c "import secrets; print(secrets.token_urlsafe(32))"
+Set-Clipboard $env:REPORT_TOKEN
+```
+
+Paste the clipboard value into the GitHub `REPORT_TOKEN` secret and use the
+environment variable when starting the receiver.
+
+The receiver saves reports as:
 
 ```text
 test-report.json

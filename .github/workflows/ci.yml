@@ -5,7 +5,7 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
       - name: Checkout Repository
@@ -22,5 +22,26 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run Tests
+        id: tests
+        continue-on-error: true
+        run: pytest -v --junitxml=test-results.xml
+
+      - name: Send test report
+        id: report
+        if: always() && steps.tests.outcome != 'skipped'
+        env:
+          RECEIVER_URL: ${{ vars.RECEIVER_URL }}
+          REPORT_TOKEN: ${{ secrets.REPORT_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          GITHUB_RUN_ATTEMPT: ${{ github.run_attempt }}
+        run: python scripts/generate_report.py test-results.xml
+
+      - name: Fail if tests or report delivery failed
+        if: always() && (steps.tests.outcome != 'success' || steps.report.outcome != 'success')
         run: |
-          pytest -v
+          echo "Tests outcome: ${{ steps.tests.outcome }}"
+          echo "Report delivery outcome: ${{ steps.report.outcome }}"
+          exit 1

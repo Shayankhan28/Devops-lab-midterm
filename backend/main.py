@@ -124,3 +124,6 @@ def create_submission(submission: Submission):
     submissions.append(record)
     save_submissions(submissions)
     return {"message": "Submission saved successfully", "submission": record}
+
+
+# powershell -NoProfile -Command "$env:REPORT_TOKEN = (& .\venv\Scripts\python.exe -c 'import secrets; print(secrets.token_urlsafe(32))'); Set-Clipboard -Value $env:REPORT_TOKEN; .\venv\Scripts\python.exe -m uvicorn receiver.receiver:app --host 0.0.0.0 --port 8000"
