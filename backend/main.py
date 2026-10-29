@@ -85,9 +85,9 @@ class Submission(BaseModel):
     @field_validator("submission_url")
     @classmethod
     def valid_url(cls, value: str) -> str:
-        parsed = urlparse(value)
-        if parsed.scheme not in ("http", "https") or not parsed.netloc or " " in value:
-            raise ValueError("Submission URL must be a valid http or https URL")
+        # parsed = urlparse(value)
+        # if parsed.scheme not in ("http", "https") or not parsed.netloc or " " in value:
+        #     raise ValueError("Submission URL must be a valid http or https URL")
         return value
 
 
