@@ -74,29 +74,41 @@ The test results will be displayed in the terminal.
 
 ## Sending Reports to Your Computer
 
-This project uses a GitHub self-hosted runner so GitHub Actions can send reports
-to the receiver on the same Windows computer without a public tunnel.
+This project uses Cloudflare Quick Tunnel to let GitHub-hosted Actions send
+reports to the receiver on your computer. No self-hosted runner or Cloudflare
+account is required for a temporary Quick Tunnel.
 
-1. In GitHub, open **Settings → Actions → Runners → New self-hosted runner**.
-   Choose **Windows** and follow GitHub's displayed instructions to download
-   and configure the runner from a separate repository folder. Keep its
-   `run.cmd` terminal open while you want workflows to run.
-2. In **Settings → Secrets and variables → Actions**, add:
-   - Repository variable `RECEIVER_URL` with value `http://127.0.0.1:8000`.
-   - Repository secret `REPORT_TOKEN` with a private token you generate locally.
-3. In a separate terminal, from the repository root, start the receiver with
-   that same token:
+1. In **Settings → Secrets and variables → Actions**, add:
+   - Repository variable `RECEIVER_URL` with the HTTPS `trycloudflare.com` URL
+     printed by `cloudflared`.
+   - Repository secret `REPORT_TOKEN` with a private token generated locally.
+2. From the repository root, start the receiver in one PowerShell terminal:
 
 ```powershell
 $env:REPORT_TOKEN = "your-private-token"
-python -m uvicorn receiver.receiver:app --host 127.0.0.1 --port 8000
+python -m uvicorn receiver.receiver:app --host 0.0.0.0 --port 8000
 ```
 
-Keep both the runner and receiver terminals open, then push a commit. The
-workflow runs the tests on your PC and sends the actual results to the receiver,
-which saves or replaces `test-report.json` in the repository root. The report
-includes run metadata, test counts, each test result, and failure messages
-when available.
+3. Install `cloudflared` if needed, then start a Quick Tunnel in another
+   terminal:
+
+   ```powershell
+   winget install --id Cloudflare.cloudflared
+   cloudflared tunnel --url http://127.0.0.1:8000
+   ```
+
+4. Copy the HTTPS `trycloudflare.com` URL printed by the command into the
+   GitHub `RECEIVER_URL` variable. The Actions runner uses that public URL to
+   reach your computer.
+5. Keep the receiver and tunnel terminals open, then push a commit. The
+   GitHub-hosted workflow sends the actual results to the receiver, which saves
+   or replaces `test-report.json` in the repository root.
+
+Quick Tunnel URLs are temporary and can change when restarted. Update
+`RECEIVER_URL` in GitHub whenever the URL changes.
+
+The report includes run metadata, test counts, each test result, and failure
+messages when available.
 
 The report step runs after both passing and failing test runs. A test failure
 still makes the GitHub Actions job fail after the report is sent. The token
