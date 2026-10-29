@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Assignment Submission Portal - CSC418 DevOps Lab">
+  <title>Assignment Submission Portal</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Background -->
+  <div class="aurora" aria-hidden="true">
+    <span class="blob b1"></span>
+    <span class="blob b2"></span>
+    <span class="blob b3"></span>
+    <span class="noise"></span>
+  </div>
+
+  <!-- Navbar -->
+  <header class="nav">
+    <div class="container nav-inner">
+      <div class="logo">
+        <span class="logo-mark" aria-hidden="true"><span></span></span>
+        <span class="logo-text">Submit<strong>Hub</strong></span>
+      </div>
+      <span id="mode-badge" class="status">
+        <span class="status-dot"></span>
+        <span id="mode-text">Connecting...</span>
+      </span>
+    </div>
+  </header>
+
+  <main>
+    <!-- Hero + Form -->
+    <section class="container hero">
+      <div class="hero-left">
+        <span class="eyebrow">CSC418 &middot; DevOps Lab</span>
+        <h1>Assignment<br><span class="gradient-text">Submission Portal</span></h1>
+        <p class="lead">
+          Submit your assignment link in seconds. Every submission is validated
+          and saved instantly.
+        </p>
+
+        <ul class="features">
+          <li><span class="check">&#10003;</span> Validated input</li>
+          <li><span class="check">&#10003;</span> Instant save</li>
+          <li><span class="check">&#10003;</span> Live submission list</li>
+        </ul>
+
+        <!-- 3D scene (decorative) -->
+        <div class="scene" id="scene" aria-hidden="true">
+          <div class="stack" id="stack">
+            <div class="layer l1">
+              <span class="line w60"></span>
+              <span class="line w80"></span>
+              <span class="line w40"></span>
+            </div>
+            <div class="layer l2">
+              <span class="pill"></span>
+              <span class="line w70"></span>
+              <span class="line w50"></span>
+            </div>
+            <div class="layer l3">
+              <span class="tick">&#10003;</span>
+              <span class="line w60"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Form card -->
+      <div class="form-card" id="form-card">
+        <div class="form-head">
+          <div>
+            <h2>Submit Assignment</h2>
+            <p class="muted">All fields are required.</p>
+          </div>
+          <span class="step" id="progress-text">0/4</span>
+        </div>
+
+        <div class="progress" aria-hidden="true">
+          <span class="progress-bar" id="progress-bar"></span>
+        </div>
+
+        <form id="submission-form" novalidate>
+          <div class="field">
+            <div class="control">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm0 2c-4.4 0-8 2.2-8 5v1h16v-1c0-2.8-3.6-5-8-5Z"/>
+              </svg>
+              <input type="text" id="name" placeholder=" " autocomplete="off" aria-describedby="name-error">
+              <label for="name">Student Name</label>
+            </div>
+            <small class="error" id="name-error"></small>
+          </div>
+
+          <div class="field">
+            <div class="control">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M3 5h18v14H3V5Zm2 2v10h14V7H5Zm2 2h4v2H7V9Zm0 4h10v2H7v-2Zm6-4h4v2h-4V9Z"/>
+              </svg>
+              <input type="text" id="registration_number" placeholder=" " autocomplete="off" aria-describedby="registration_number-error">
+              <label for="registration_number">Registration Number</label>
+            </div>
+            <small class="error" id="registration_number-error"></small>
+          </div>
+
+          <div class="field">
+            <div class="control">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M6 2h9l5 5v15H6V2Zm8 1.5V8h4.5L14 3.5ZM8 12v2h8v-2H8Zm0 4v2h8v-2H8Z"/>
+              </svg>
+              <input type="text" id="assignment_title" placeholder=" " autocomplete="off" aria-describedby="assignment_title-error">
+              <label for="assignment_title">Assignment Title</label>
+            </div>
+            <small class="error" id="assignment_title-error"></small>
+          </div>
+
+          <div class="field">
+            <div class="control">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M10.6 13.4a1 1 0 0 1 0-1.4l3-3a3 3 0 1 1 4.2 4.2l-2 2-1.4-1.4 2-2a1 1 0 1 0-1.4-1.4l-3 3a1 1 0 0 1-1.4 0ZM13.4 10.6a1 1 0 0 1 0 1.4l-3 3a3 3 0 1 1-4.2-4.2l2-2 1.4 1.4-2 2a1 1 0 1 0 1.4 1.4l3-3a1 1 0 0 1 1.4 0Z"/>
+              </svg>
+              <input type="text" id="submission_url" placeholder=" " autocomplete="off" aria-describedby="submission_url-error">
+              <label for="submission_url">Submission URL (https://...)</label>
+            </div>
+            <small class="error" id="submission_url-error"></small>
+          </div>
+
+          <button type="submit" id="submit-btn" class="btn">
+            <span class="spinner" aria-hidden="true"></span>
+            <span class="btn-text">Submit Assignment</span>
+          </button>
+
+          <div id="form-message" class="message" role="status" aria-live="polite"></div>
+        </form>
+      </div>
+    </section>
+
+    <!-- Submissions -->
+    <section class="container list-section">
+      <div class="list-card">
+        <div class="list-head">
+          <div>
+            <h2>Saved Submissions</h2>
+            <p class="muted">All valid submissions saved by the portal.</p>
+          </div>
+          <div class="counter">
+            <span id="count">0</span>
+            <small>Total</small>
+          </div>
+        </div>
+
+        <div id="empty-state" class="empty">
+          <div class="empty-icon" aria-hidden="true">&#128193;</div>
+          <p>No submissions yet.</p>
+          <small class="muted">Submitted assignments will appear here.</small>
+        </div>
+
+        <div class="table-wrap">
+          <table id="submissions-table" hidden>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Student</th>
+                <th>Reg. No</th>
+                <th>Title</th>
+                <th>URL</th>
+                <th>Submitted At</th>
+              </tr>
+            </thead>
+            <tbody id="submissions-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>Lab-mid-term &middot;</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
