@@ -21,6 +21,7 @@ local JSON report receiver, and optional email notifications.
 - [Run the application locally](#run-the-application-locally)
 - [Run tests locally](#run-tests-locally)
 - [Run CI on GitHub](#run-ci-on-github)
+- [Deploy the static demo to GitHub Pages](#deploy-the-static-demo-to-github-pages)
 - [Receive CI reports on your computer](#receive-ci-reports-on-your-computer)
 - [Optional: email reports](#optional-email-reports)
 - [Demonstrate a failing and fixed run](#demonstrate-a-failing-and-fixed-run)
@@ -35,6 +36,7 @@ local JSON report receiver, and optional email notifications.
 - Tests valid submission, missing registration number, and invalid submission URL.
 - Runs the test suite on each push and produces a machine-readable JUnit result.
 - Sends run metadata and individual test results to a local JSON report receiver.
+- Publishes the static frontend to GitHub Pages from `main` only after tests pass.
 - Optionally emails the same test results after passing or failing runs.
 
 ## Requirements
@@ -126,6 +128,27 @@ Replace `README.md` and the commit message with the files and message for your
 own change. Stage only intended files; review `git status` before committing.
 To see the CI result, open the repository's **Actions** tab, select the latest
 **Run Automated Tests** run, and inspect its steps.
+
+## Deploy the static demo to GitHub Pages
+
+The workflow publishes the contents of `frontend/` after the test step succeeds
+on `main`. Deployments are skipped for other branches and for revisions whose
+tests fail. The backend is not hosted on GitHub Pages; on a `github.io` URL the
+frontend automatically uses demo mode and saves submissions in the visitor's
+browser `localStorage`. Demo submissions are not sent to the API or stored in
+the repository JSON file.
+
+To enable Pages for this repository:
+
+1. Open **Settings → Pages**.
+2. Under **Build and deployment**, set **Source** to **GitHub Actions**.
+3. Push a commit to `main` after tests pass.
+4. In the Actions run, confirm the `deploy-pages` job succeeds.
+
+The project site URL is <https://shayankhan28.github.io/Devops-lab-midterm/>.
+The first publication may take a few minutes. Later successful pushes to `main`
+update the site. Failed tests do not publish a new version, so the existing
+deployment remains available.
 
 ## Receive CI reports on your computer
 

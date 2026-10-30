@@ -7,6 +7,9 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    outputs:
+      test_outcome: ${{ steps.tests.outcome }}
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -63,3 +66,27 @@ jobs:
           echo "Report delivery outcome: ${{ steps.report.outcome }}"
           echo "Email outcome: ${{ steps.email.outcome }}"
           exit 1
+
+  deploy-pages:
+    needs: test
+    if: always() && needs.test.outputs.test_outcome == 'success' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload static frontend
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: frontend
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
